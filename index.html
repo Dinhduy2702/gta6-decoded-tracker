@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GTA 6 Decoded: 100% Secrets, Leonida Map & Money Tracker</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23F25C54'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-family='Arial Narrow,sans-serif' font-weight='800' font-size='34' fill='%23FFFFFF'%3EVI%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Track GTA 6 100% completion, Vice City Easter eggs, rare vehicles, hidden weapons, Leonida map pins, and heist payouts. Free browser tracker by GTA 6 Decoded.">
+  <meta property="og:title" content="GTA 6 Decoded: 100% Secrets, Map & Money Tracker">
+  <meta property="og:description" content="Interactive Leonida map, confirmed and community secrets checklist, and launch money planner saved right in your browser.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand-block" href="#top" id="brandHomeLink">
+        <span class="brand-mark" aria-hidden="true">VI</span>
+        <span class="brand-text">
+          <span class="brand-name" id="brandNameText">GTA 6 Decoded</span>
+          <span class="brand-sub" id="brandSubText">100% Secrets, Map &amp; Money Tracker</span>
+        </span>
+      </a>
+
+      <nav class="main-nav" aria-label="Tracker views" role="tablist">
+        <button type="button" class="nav-tab" role="tab" id="tab-checklist" aria-controls="panel-checklist" aria-selected="true" data-view="checklist">
+          100% Checklist
+        </button>
+        <button type="button" class="nav-tab" role="tab" id="tab-map" aria-controls="panel-map" aria-selected="false" data-view="map">
+          Leonida Map
+        </button>
+        <button type="button" class="nav-tab" role="tab" id="tab-money" aria-controls="panel-money" aria-selected="false" data-view="money">
+          Money &amp; Prep
+        </button>
+      </nav>
+
+      <div class="header-actions">
+        <button type="button" class="btn btn-sm" id="backupOpenBtn" aria-haspopup="dialog">
+          Backup
+        </button>
+        <button type="button" class="btn btn-sm" id="themeToggleBtn" aria-label="Switch color theme">
+          Light Mode
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top" class="container">
+    <!-- Progress Command Strip -->
+    <section class="command-strip" aria-label="Completion overview">
+      <div class="command-top">
+        <div>
+          <h1 class="page-title">Leonida 100% Field Tracker</h1>
+          <p class="page-lead">
+            Track confirmed Rockstar reveals and community secrets across Vice City, Leonida Keys, Grassrivers, and Port Gellhorn. Progress saves automatically in your browser.
+          </p>
+        </div>
+
+        <div class="command-kpis">
+          <div class="kpi-box">
+            <span class="kpi-label">Completed</span>
+            <span class="kpi-value tabular accent-teal" id="kpiDoneCount">0 / 0</span>
+          </div>
+          <div class="kpi-box">
+            <span class="kpi-label">Progress</span>
+            <span class="kpi-value tabular" id="kpiPercent">0%</span>
+          </div>
+          <button type="button" class="btn btn-primary" id="copyShareBtn">
+            Copy Progress Card
+          </button>
+        </div>
+      </div>
+
+      <div class="progress-track-wrap">
+        <div class="progress-bar-bg" role="progressbar" aria-label="Overall completion percentage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="overallProgressBar">
+          <div class="progress-bar-fill" id="overallProgressFill"></div>
+        </div>
+        <div class="category-mini-grid" id="categoryMiniGrid" aria-label="Quick category filter"></div>
+      </div>
+    </section>
+
+    <!-- TAB 1: 100% CHECKLIST -->
+    <section class="view-panel" id="panel-checklist" role="tabpanel" aria-labelledby="tab-checklist">
+      <div class="filter-bar" aria-label="Checklist filters">
+        <div class="field-group">
+          <label class="field-label" for="searchInput">Search Secrets, Cars, POIs</label>
+          <input class="input-control" type="search" id="searchInput" placeholder="Try: Ocean View, Gator, Cheetah, Keys..." autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="categorySelect">Category</label>
+          <select class="select-control" id="categorySelect"></select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="sourceSelect">Source Tag</label>
+          <select class="select-control" id="sourceSelect">
+            <option value="all">All Sources</option>
+            <option value="confirmed">Confirmed Only</option>
+            <option value="rumor">Community / Rumor</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="regionSelect">Region</label>
+          <select class="select-control" id="regionSelect"></select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="statusSelect">Status</label>
+          <select class="select-control" id="statusSelect">
+            <option value="all">All Items</option>
+            <option value="remaining">Remaining</option>
+            <option value="done">Completed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="list-meta-row">
+        <span id="resultCountText" class="tabular">Showing 0 items</span>
+        <button type="button" class="btn btn-sm" id="resetFiltersBtn">Reset Filters</button>
+      </div>
+
+      <ul class="checklist-list" id="checklistContainer" role="list"></ul>
+
+      <div class="empty-state" id="emptyStateBox" hidden role="status">
+        <h3>No matching entries found</h3>
+        <p>Try clearing one of your filters or searching a different Leonida location.</p>
+        <button type="button" class="btn btn-primary" id="emptyResetBtn">Show All Entries</button>
+      </div>
+    </section>
+
+    <!-- TAB 2: INTERACTIVE LEONIDA MAP -->
+    <section class="view-panel" id="panel-map" role="tabpanel" aria-labelledby="tab-map" hidden>
+      <div class="map-layout">
+        <div class="map-card">
+          <div class="map-toolbar">
+            <div class="map-filter-pills" id="mapFilterPills" aria-label="Filter map pins by category"></div>
+            <div class="map-zoom-controls">
+              <button type="button" class="btn btn-sm" id="mapZoomOutBtn" aria-label="Zoom out map">-</button>
+              <button type="button" class="btn btn-sm" id="mapZoomResetBtn">100%</button>
+              <button type="button" class="btn btn-sm" id="mapZoomInBtn" aria-label="Zoom in map">+</button>
+            </div>
+          </div>
+
+          <div class="map-viewport" id="mapViewport">
+            <div class="map-canvas" id="mapCanvas">
+              <!-- Stylized Leonida Geographic Vector Map -->
+              <svg class="map-svg" viewBox="0 0 1000 625" role="img" aria-label="Stylized map of the State of Leonida">
+                <rect width="1000" height="625" fill="var(--map-water)" />
+                <!-- Subtle latitude lines for nautical map feel -->
+                <g stroke="var(--border-subtle)" stroke-width="1" opacity="0.35">
+                  <line x1="0" y1="156" x2="1000" y2="156" />
+                  <line x1="0" y1="312" x2="1000" y2="312" />
+                  <line x1="0" y1="468" x2="1000" y2="468" />
+                  <line x1="250" y1="0" x2="250" y2="625" />
+                  <line x1="500" y1="0" x2="500" y2="625" />
+                  <line x1="750" y1="0" x2="750" y2="625" />
+                </g>
+
+                <!-- Mainland Leonida Peninsula -->
+                <path d="M 190 70 L 660 65 L 745 145 L 795 255 L 820 355 L 775 435 L 705 460 L 615 470 L 525 465 L 430 435 L 335 415 L 235 375 L 185 280 L 210 175 Z"
+                      fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="3" />
+
+                <!-- Lake Leonida Inland -->
+                <ellipse cx="520" cy="145" rx="68" ry="38" fill="var(--map-water)" stroke="var(--map-land-stroke)" stroke-width="2" />
+
+                <!-- Vice Beach Barrier Island -->
+                <path d="M 795 270 L 835 285 L 845 365 L 825 415 L 790 405 L 800 330 Z"
+                      fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="2.5" />
+
+                <!-- Leonida Keys Chain -->
+                <path d="M 690 475 L 665 510 L 620 535 L 555 552 L 495 560"
+                      fill="none" stroke="var(--map-road)" stroke-width="4" stroke-dasharray="10 6" />
+                <ellipse cx="662" cy="508" rx="22" ry="10" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="2" />
+                <ellipse cx="605" cy="538" rx="26" ry="11" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="2" />
+                <ellipse cx="528" cy="556" rx="30" ry="11" fill="var(--map-land)" stroke="var(--map-land-stroke)" stroke-width="2" />
+
+                <!-- Major Highways -->
+                <path d="M 275 305 Q 485 275 720 310" fill="none" stroke="var(--map-road)" stroke-width="3" />
+                <path d="M 415 170 L 455 390" fill="none" stroke="var(--map-road)" stroke-width="2.5" />
+                <path d="M 715 310 L 812 335" fill="none" stroke="var(--map-road)" stroke-width="3" />
+
+                <!-- Region Labels -->
+                <g fill="var(--text-muted)" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="18" letter-spacing="1.5">
+                  <text x="355" y="128">AMBROSIA &amp; LAKE LEONIDA</text>
+                  <text x="225" y="290">PORT GELLHORN</text>
+                  <text x="415" y="400">GRASSRIVERS</text>
+                  <text x="615" y="295">VICE CITY</text>
+                  <text x="845" y="345">VICE BEACH</text>
+                  <text x="530" y="595">LEONIDA KEYS</text>
+                </g>
+              </svg>
+              <div id="mapPinsLayer"></div>
+            </div>
+          </div>
+
+          <div class="map-legend">
+            <span class="legend-item"><span class="legend-dot" style="background: var(--accent-coral);"></span> Confirmed (Remaining)</span>
+            <span class="legend-item"><span class="legend-dot" style="background: var(--accent-amber);"></span> Community / Rumor</span>
+            <span class="legend-item"><span class="legend-dot" style="background: var(--accent-teal);"></span> Completed</span>
+          </div>
+        </div>
+
+        <aside class="map-inspector" aria-label="Selected map pin details">
+          <div id="mapInspectorContent">
+            <h2>Select a Pin</h2>
+            <p class="panel-sub">Click any numbered marker on the Leonida map to inspect the secret, read the hunting tip, and check it off your 100% run.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- TAB 3: MONEY & HEIST PREP -->
+    <section class="view-panel" id="panel-money" role="tabpanel" aria-labelledby="tab-money" hidden>
+      <div class="money-grid">
+        <div class="panel-card">
+          <h2>Leonida Bankroll Tracker</h2>
+          <p class="panel-sub">Log your current in-game cash or launch-week target to track key Vice City property milestones.</p>
+
+          <div class="field-group">
+            <label class="field-label" for="cashInput">Current Cash ($ USD in-game)</label>
+            <input class="input-control tabular" type="number" id="cashInput" min="0" max="999999999" step="5000" value="25000">
+          </div>
+
+          <div class="milestone-list" id="milestoneList"></div>
+        </div>
+
+        <div class="panel-card">
+          <h2>4-Player Heist Payout Splitter</h2>
+          <p class="panel-sub">Plan fair crew cuts before launching a score. Adjust the gross take and crew percentages below.</p>
+
+          <div class="field-group">
+            <label class="field-label" for="heistTakeInput">Estimated Heist Take ($)</label>
+            <input class="input-control tabular" type="number" id="heistTakeInput" min="10000" max="50000000" step="25000" value="1200000">
+          </div>
+
+          <div class="heist-players" id="heistPlayersContainer"></div>
+          <div class="heist-warning" id="heistWarning" hidden role="alert"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ECOSYSTEM & CURATED GEAR STRIP -->
+    <section class="ecosystem-section" aria-label="Recommended gear and community channels">
+      <div class="section-head">
+        <h2>Launch-Day Gear &amp; GTA 6 Decoded Hub</h2>
+        <span class="tag tag-neutral">Curated Picks</span>
+      </div>
+
+      <div class="gear-grid" id="affiliateGrid"></div>
+
+      <div class="support-strip">
+        <div>
+          <strong>Follow GTA 6 Decoded for Daily Leonida Breakdowns</strong>
+          <p class="panel-sub" style="margin: 0.2rem 0 0;" id="supportDescText">
+            Keep this tracker updated through launch week and every DLC drop.
+          </p>
+        </div>
+        <div class="social-links" id="socialLinksContainer"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>GTA 6 Decoded: 100% Tracker. Unofficial fan companion tool. All GTA trademarks belong to Rockstar Games / Take-Two Interactive.</span>
+      <span id="footerVersionText">v1.0</span>
+    </div>
+  </footer>
+
+  <!-- ITEM DETAIL MODAL -->
+  <div class="modal-backdrop" id="detailModal" hidden role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <div>
+          <div id="detailModalBadges" style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.35rem;"></div>
+          <h2 id="detailModalTitle">Entry Detail</h2>
+        </div>
+        <button type="button" class="btn btn-sm" id="detailModalClose" aria-label="Close detail dialog">Close</button>
+      </div>
+      <p id="detailModalSummary"></p>
+      <div class="tip-box">
+        <strong>Field Tip:</strong> <span id="detailModalTip"></span>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="detailNoteInput">Personal Note (saved locally)</label>
+        <textarea class="note-area" id="detailNoteInput" placeholder="Add your own spawn time, route, or clue note..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm" id="detailShowOnMapBtn">Locate on Leonida Map</button>
+        <button type="button" class="btn btn-primary btn-sm" id="detailToggleDoneBtn">Mark Complete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BACKUP & RESTORE MODAL -->
+  <div class="modal-backdrop" id="backupModal" hidden role="dialog" aria-modal="true" aria-labelledby="backupModalTitle">
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <h2 id="backupModalTitle">Backup &amp; Restore Progress</h2>
+        <button type="button" class="btn btn-sm" id="backupModalClose" aria-label="Close backup dialog">Close</button>
+      </div>
+      <p class="panel-sub">Your checklist, notes, and bankroll data stay 100% private in your browser. Export a JSON file to transfer between PC and phone.</p>
+
+      <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem;">
+        <button type="button" class="btn btn-primary" id="exportJsonBtn">Download Backup (.json)</button>
+        <label class="btn" for="importJsonInput">Import Backup (.json)</label>
+        <input type="file" id="importJsonInput" accept="application/json" class="sr-only">
+      </div>
+
+      <div id="backupFeedback" class="heist-warning" hidden role="status"></div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm" id="resetAllDataBtn">Reset All Progress</button>
+        <button type="button" class="btn btn-sm" id="backupDoneBtn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toastBox" hidden role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
