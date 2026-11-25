@@ -1,59 +1,29 @@
-# DESIGN SYSTEM CONTRACT: GTA 6 Decoded - 100% Tracker (SP #1)
+# DESIGN SYSTEM CONTRACT v2.0: GTA 6 Decoded - 100% Tracker
 
-> Locked before implementation per `anti-slop` and `frontend-ui-engineering`.
-> Every visual choice below serves readability, operational density for gamers, and authentic Vice City / Leonida character without generic AI clichés.
+> Upgraded using `frontend-design`, `ui-ux-pro-max`, `anti-slop`, and competitive UX analysis of MapGenie, GTAWeb.eu, and GTABase.
 
-## 1. Brand Identity & Tone
-- **Product Name:** `GTA 6 Decoded` (Sub-label: `100% Tracker`)
-- **Ecosystem Link:** Official companion web app for the `GTA 6 Decoded` YouTube channels and `GTA 6 Decoded` / `GTA 6 Loot & Guides` Facebook & Instagram pages.
-- **Visual Direction:** Coastal Nocturne Dispatch & Florida Highway Telemetry. Sharp editorial framing inspired by Miami night dashboards and investigative field dossiers, avoiding purple/blue AI gradients, pill-everywhere badges, and excessive glow.
-- **Copywriting Discipline:** Direct, gamer-native US English. Zero em dashes (`—`), zero fabricated user stats, zero fake testimonials, zero dead controls.
+## 1. Competitive UX Synthesis
+- **From MapGenie:** Split-panel interactive map workspace with left filter sidebar, Show All / Hide All master toggles, Hide Completed switch, distinct SVG category pin markers, drag-to-pan + zoom, and instant pin inspector.
+- **From GTAWeb.eu:** Companion toolkit density combining map tracking with live bankroll milestones and quick-preset heist payout splitting.
+- **From GTABase:** Searchable, high-contrast database cards with category color coding, Grid/List view toggle, and clear Confirmed vs. Community source labels.
 
-## 2. Color Tokens (WCAG AA Compliant in Both Themes)
-
-### Dark Theme (Default: Leonida Night)
-- `--bg-canvas`: `#0B0E14` (Main page background)
-- `--bg-surface`: `#131823` (Primary panels, cards, map container)
-- `--bg-elevated`: `#1B2232` (Interactive hover, active panels, modal)
-- `--border-subtle`: `#263043` (1px hairline dividers)
-- `--border-strong`: `#3A4863` (Input outlines, focused borders)
-- `--text-primary`: `#F3F5F8` (Contrast > 14:1 on canvas)
-- `--text-secondary`: `#A9B4C7` (Contrast > 7.5:1 on surface)
-- `--text-muted`: `#7C8AA3` (Metadata, timestamps, contrast >= 4.6:1)
-- `--accent-coral`: `#F25C54` (Primary action, active tab indicator)
-- `--accent-coral-hover`: `#FF726B`
-- `--accent-teal`: `#14B8A6` (Completed state, Confirmed source badge)
-- `--accent-amber`: `#F59E0B` (Community/Rumor source badge, Money/Heist highlights)
-
-### Light Theme (Vice Daylight)
-- `--bg-canvas`: `#F5F2EB` (Warm coastal sand paper, reduces glare)
-- `--bg-surface`: `#FFFFFF` (Crisp cards and tables)
-- `--bg-elevated`: `#ECE7DC` (Subtle control wells)
-- `--border-subtle`: `#DDD6C7`
-- `--border-strong`: `#B8AE9A`
-- `--text-primary`: `#121722` (Contrast > 15:1)
-- `--text-secondary`: `#3E495C` (Contrast > 7.5:1)
-- `--text-muted`: `#5B677D` (Contrast >= 4.8:1)
-- `--accent-coral`: `#CF3A32` (Darkened for >= 4.5:1 text/button contrast)
-- `--accent-coral-hover`: `#B52F28`
-- `--accent-teal`: `#0E7C70`
-- `--accent-amber`: `#A16207`
+## 2. Palette (Miami Nocturne + Vice Daylight, WCAG AA Verified)
+- **Dark Default:** Canvas `#070B12`, Surface `#101725`, Elevated `#182235`, Hairline `#253248`, Primary Text `#F4F6FA`, Secondary `#A8B5CB`.
+- **Light Mode:** Canvas `#F3F0E8`, Surface `#FFFFFF`, Elevated `#E9E4D8`, Hairline `#D8D1C2`, Primary Text `#111827`, Secondary `#3E4A5E`.
+- **Category & Functional Accents:**
+  - Coral Primary (`#F2545B` dark / `#C9333A` light): Primary actions, active tab, Easter Eggs.
+  - Turquoise Complete (`#10B981` dark / `#0A7B56` light): Completed state, Confirmed badge, Locations.
+  - Amber Gold (`#F59E0B` dark / `#A16207` light): Community/Rumor badge, Money & Heist.
+  - Sky Cyan (`#38BDF8` dark / `#0369A1` light): Rare Vehicles.
+  - Crimson Steel (`#FB7185` dark / `#BE123C` light): Hidden Weapons.
+  - Sand Violet (`#A78BFA` dark / `#6D28D9` light): Characters & Factions.
 
 ## 3. Typography
-- **Display / Headings / KPI Numbers:** `'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif` (Strong highway-signage geometry suited to Leonida/Vice City).
-- **Body / UI Controls:** `'Plus Jakarta Sans', system-ui, -apple-system, sans-serif` (High legibility at 14px-16px on mobile screens).
-- **Numeric Alignment:** `font-variant-numeric: tabular-nums` on all counters, percentages, and dollar values.
-- **Hierarchy:** Single `<h1>` per document (`2.25rem` mobile, `3rem` desktop), `<h2>` section titles (`1.5rem`), `<h3>` card/panel titles (`1.125rem`), body (`0.9375rem`), caption (`0.8125rem`).
+- **Display & Telemetry HUD:** `'Chakra Petch', 'Barlow Condensed', sans-serif` (Sharp angular gaming geometry).
+- **Body & Controls:** `'Plus Jakarta Sans', system-ui, sans-serif` (Crisp readability on mobile & desktop).
+- **Numbers:** `font-variant-numeric: tabular-nums` across all counters, percentages, and USD values.
 
-## 4. Spacing, Radius & Elevation
-- **Spacing Scale:** `4px` base unit (`0.25rem`, `0.5rem`, `0.75rem`, `1rem`, `1.5rem`, `2rem`).
-- **Corner Radius:** Disciplined technical radii (`4px` badges/tags, `6px` inputs/buttons, `10px` panels/cards). No pill-shaped cards or uniform `rounded-2xl` everywhere.
-- **Elevation:** Flat 1px borders by default. Subtle drop shadow reserved strictly for floating modals and the active map inspector popover.
-- **Motion:** Functional transitions only (`150ms ease` for state feedback), fully disabled under `prefers-reduced-motion: reduce`.
-
-## 5. Responsive & Accessibility Contract
-- **Breakpoints:** Mobile-first (`390px` primary phone check, `768px` tablet, `1024px` laptop, `1440px` desktop).
-- **Zero Horizontal Overflow:** Verified at `390px` and `1440px`.
-- **Touch Targets:** Minimum `44x44px` for checkboxes, filter buttons, map controls, and navigation tabs on mobile.
-- **Keyboard & Focus:** Native `<button>`, `<a href>`, `<input>`, `<select>`. Visible `2px solid var(--accent-coral)` focus-visible ring with `2px` offset. Escape closes modals/drawers.
-- **Required States:** Populated, Filtered Empty State (with one-click reset), Backup Import Error/Success feedback, and Light/Dark theme parity.
+## 4. Visual Craft & Anti-Slop Locks
+- Custom AAA-style twilight key art (`assets/hero-leonida.jpg`) with left-scrim contrast protection (`fetchpriority="high"`).
+- Top-down dark satellite tactical map (`assets/leonida-map-bg.jpg`) with precisely aligned coordinates and SVG category icons (zero emojis).
+- Zero em dashes (`—`), zero fake stats, zero dead buttons, full keyboard navigation + `prefers-reduced-motion` support.

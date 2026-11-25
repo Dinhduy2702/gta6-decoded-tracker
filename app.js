@@ -3,9 +3,21 @@
 
   const STORAGE_KEY = "gta6_decoded_tracker_v1";
   const THEME_KEY = "gta6_decoded_theme_v1";
+  const RING_CIRCUMFERENCE = 2 * Math.PI * 38;
 
   const DATA = window.GTA6_DATA;
   const CONFIG = window.GTA6_CONFIG;
+
+  const CATEGORY_ICONS = {
+    "easter-eggs": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="3" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21"/></svg>`,
+    "locations": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    "vehicles": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 17h14v-5l-2-5H7l-2 5v5z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>`,
+    "weapons": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>`,
+    "characters": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    "money": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`
+  };
+
+  const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
 
   const DEFAULT_STATE = {
     completedIds: [],
@@ -21,7 +33,8 @@
   };
 
   let state = loadState();
-  let activeView = "checklist";
+  let activeView = "map";
+  let checklistMode = "list";
   let filters = {
     search: "",
     category: "all",
@@ -29,9 +42,19 @@
     region: "all",
     status: "all"
   };
-  let mapCategory = "all";
+
+  // MapGenie-style multi-layer state
+  let mapLayers = Object.fromEntries(DATA.categories.map((c) => [c.id, true]));
+  let mapSearch = "";
+  let mapSource = "all";
+  let mapHideCompleted = false;
   let mapZoom = 1;
-  let selectedPinId = null;
+  let mapPanX = 0;
+  let mapPanY = 0;
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let selectedPinId = DATA.items[0] ? DATA.items[0].id : null;
   let activeDetailId = null;
   let toastTimer = null;
 
@@ -40,12 +63,29 @@
     brandSubText: document.getElementById("brandSubText"),
     footerVersionText: document.getElementById("footerVersionText"),
     themeToggleBtn: document.getElementById("themeToggleBtn"),
-    copyShareBtn: document.getElementById("copyShareBtn"),
+    heroCopyBtn: document.getElementById("heroCopyBtn"),
+    heroJumpChecklistBtn: document.getElementById("heroJumpChecklistBtn"),
     kpiDoneCount: document.getElementById("kpiDoneCount"),
     kpiPercent: document.getElementById("kpiPercent"),
-    overallProgressBar: document.getElementById("overallProgressBar"),
-    overallProgressFill: document.getElementById("overallProgressFill"),
-    categoryMiniGrid: document.getElementById("categoryMiniGrid"),
+    ringProgressCircle: document.getElementById("ringProgressCircle"),
+    hudCatSummary: document.getElementById("hudCatSummary"),
+    categoryStrip: document.getElementById("categoryStrip"),
+
+    mapVisibleCountTag: document.getElementById("mapVisibleCountTag"),
+    mapSearchInput: document.getElementById("mapSearchInput"),
+    mapShowAllBtn: document.getElementById("mapShowAllBtn"),
+    mapHideAllBtn: document.getElementById("mapHideAllBtn"),
+    mapLayerList: document.getElementById("mapLayerList"),
+    mapHideCompletedToggle: document.getElementById("mapHideCompletedToggle"),
+    mapSourceSelect: document.getElementById("mapSourceSelect"),
+    mapViewport: document.getElementById("mapViewport"),
+    mapCanvas: document.getElementById("mapCanvas"),
+    mapRegionLabels: document.getElementById("mapRegionLabels"),
+    mapPinsLayer: document.getElementById("mapPinsLayer"),
+    mapInspectorBar: document.getElementById("mapInspectorBar"),
+    mapZoomInBtn: document.getElementById("mapZoomInBtn"),
+    mapZoomOutBtn: document.getElementById("mapZoomOutBtn"),
+    mapZoomResetBtn: document.getElementById("mapZoomResetBtn"),
 
     searchInput: document.getElementById("searchInput"),
     categorySelect: document.getElementById("categorySelect"),
@@ -53,18 +93,12 @@
     regionSelect: document.getElementById("regionSelect"),
     statusSelect: document.getElementById("statusSelect"),
     resultCountText: document.getElementById("resultCountText"),
+    viewListBtn: document.getElementById("viewListBtn"),
+    viewGridBtn: document.getElementById("viewGridBtn"),
     resetFiltersBtn: document.getElementById("resetFiltersBtn"),
     emptyResetBtn: document.getElementById("emptyResetBtn"),
     checklistContainer: document.getElementById("checklistContainer"),
     emptyStateBox: document.getElementById("emptyStateBox"),
-
-    mapFilterPills: document.getElementById("mapFilterPills"),
-    mapPinsLayer: document.getElementById("mapPinsLayer"),
-    mapCanvas: document.getElementById("mapCanvas"),
-    mapInspectorContent: document.getElementById("mapInspectorContent"),
-    mapZoomInBtn: document.getElementById("mapZoomInBtn"),
-    mapZoomOutBtn: document.getElementById("mapZoomOutBtn"),
-    mapZoomResetBtn: document.getElementById("mapZoomResetBtn"),
 
     cashInput: document.getElementById("cashInput"),
     milestoneList: document.getElementById("milestoneList"),
@@ -138,9 +172,8 @@
     return "$" + Math.round(amount).toLocaleString("en-US");
   }
 
-  function getCategoryLabel(catId) {
-    const found = DATA.categories.find((c) => c.id === catId);
-    return found ? found.shortLabel : catId;
+  function getCategory(catId) {
+    return DATA.categories.find((c) => c.id === catId) || { id: catId, shortLabel: catId, color: "#F2545B" };
   }
 
   function getRegionLabel(regId) {
@@ -165,8 +198,7 @@
 
   /* Theme */
   function initTheme() {
-    const saved = localStorage.getItem(THEME_KEY) || "dark";
-    applyTheme(saved);
+    applyTheme(localStorage.getItem(THEME_KEY) || "dark");
   }
 
   function applyTheme(theme) {
@@ -175,23 +207,21 @@
     el.themeToggleBtn.textContent = theme === "dark" ? "Light Mode" : "Dark Mode";
   }
 
-  /* View Tabs */
+  /* Views */
   function switchView(viewName) {
     activeView = viewName;
     document.querySelectorAll(".nav-tab").forEach((btn) => {
-      const isSelected = btn.dataset.view === viewName;
-      btn.setAttribute("aria-selected", String(isSelected));
+      btn.setAttribute("aria-selected", String(btn.dataset.view === viewName));
     });
     document.querySelectorAll(".view-panel").forEach((panel) => {
       panel.hidden = panel.id !== "panel-" + viewName;
     });
   }
 
-  /* Populate static dropdowns & config-driven sections */
   function initControls() {
     el.brandNameText.textContent = CONFIG.brand.name;
     el.brandSubText.textContent = CONFIG.brand.subtitle;
-    el.footerVersionText.textContent = `${CONFIG.brand.version} | Updated ${CONFIG.brand.lastUpdated}`;
+    el.footerVersionText.textContent = `v2.0 (Leonida Tactical) | Updated ${CONFIG.brand.lastUpdated}`;
 
     el.categorySelect.innerHTML = `<option value="all">All Categories</option>` +
       DATA.categories.map((c) => `<option value="${c.id}">${c.label}</option>`).join("");
@@ -199,13 +229,17 @@
     el.regionSelect.innerHTML = `<option value="all">All Regions</option>` +
       DATA.regions.map((r) => `<option value="${r.id}">${r.label}</option>`).join("");
 
+    el.mapRegionLabels.innerHTML = DATA.regions.map((r) =>
+      `<span class="map-region-tag" style="left:${r.mapX}%; top:${r.mapY}%;">${r.label}</span>`
+    ).join("");
+
     el.cashInput.value = state.cash;
     el.heistTakeInput.value = state.heistTake;
 
     renderMonetization();
   }
 
-  /* Render Overview KPIs & Category Mini-Grid */
+  /* Overview HUD + Category Strip */
   function renderOverview() {
     const total = DATA.items.length;
     const done = state.completedIds.filter((id) => DATA.items.some((i) => i.id === id)).length;
@@ -213,23 +247,126 @@
 
     el.kpiDoneCount.textContent = `${done} / ${total}`;
     el.kpiPercent.textContent = `${pct}%`;
-    el.overallProgressBar.setAttribute("aria-valuenow", String(pct));
-    el.overallProgressFill.style.width = `${pct}%`;
+    const offset = RING_CIRCUMFERENCE - (pct / 100) * RING_CIRCUMFERENCE;
+    el.ringProgressCircle.style.strokeDashoffset = String(offset);
 
-    el.categoryMiniGrid.innerHTML = DATA.categories.map((cat) => {
+    el.hudCatSummary.innerHTML = DATA.categories.map((cat) => {
+      const catItems = DATA.items.filter((i) => i.category === cat.id);
+      const catDone = catItems.filter((i) => isCompleted(i.id)).length;
+      return `
+        <div class="hud-mini-stat">
+          <span><span class="hud-dot" style="background:${cat.color};"></span>${cat.shortLabel}</span>
+          <strong class="tabular">${catDone}/${catItems.length}</strong>
+        </div>
+      `;
+    }).join("");
+
+    el.categoryStrip.innerHTML = DATA.categories.map((cat) => {
       const catItems = DATA.items.filter((i) => i.category === cat.id);
       const catDone = catItems.filter((i) => isCompleted(i.id)).length;
       const isActive = filters.category === cat.id && activeView === "checklist";
       return `
-        <button type="button" class="cat-mini-btn ${isActive ? "active" : ""}" data-quick-cat="${cat.id}">
-          <span class="cat-mini-name">${cat.shortLabel}</span>
-          <span class="cat-mini-count tabular">${catDone}/${catItems.length}</span>
+        <button type="button" class="cat-card-btn ${isActive ? "active" : ""}" data-quick-cat="${cat.id}">
+          <span class="cat-icon-box" style="background:${cat.color};">${CATEGORY_ICONS[cat.id] || ""}</span>
+          <span class="cat-card-info">
+            <span class="cat-card-name">${cat.shortLabel}</span>
+            <span class="cat-card-count tabular">${catDone} / ${catItems.length}</span>
+          </span>
         </button>
       `;
     }).join("");
   }
 
-  /* Render Checklist */
+  /* MapGenie-style Interactive Map */
+  function applyMapTransform() {
+    el.mapCanvas.style.transform = `translate(${mapPanX}px, ${mapPanY}px) scale(${mapZoom})`;
+    el.mapZoomResetBtn.textContent = `${Math.round(mapZoom * 100)}%`;
+  }
+
+  function renderMap() {
+    el.mapLayerList.innerHTML = DATA.categories.map((cat) => {
+      const catItems = DATA.items.filter((i) => i.category === cat.id);
+      const catDone = catItems.filter((i) => isCompleted(i.id)).length;
+      const on = Boolean(mapLayers[cat.id]);
+      return `
+        <button type="button" class="layer-btn ${on ? "" : "is-off"}" data-layer-id="${cat.id}" aria-pressed="${on}">
+          <span class="layer-left">
+            <span class="layer-swatch" style="background:${cat.color};">${CATEGORY_ICONS[cat.id] || ""}</span>
+            <span>${cat.shortLabel}</span>
+          </span>
+          <span class="tabular" style="color:var(--text-muted);">${catDone}/${catItems.length}</span>
+        </button>
+      `;
+    }).join("");
+
+    const q = mapSearch.trim().toLowerCase();
+    const visiblePins = DATA.items.filter((item) => {
+      if (!mapLayers[item.category]) return false;
+      if (mapSource !== "all" && item.source !== mapSource) return false;
+      if (mapHideCompleted && isCompleted(item.id)) return false;
+      if (q) {
+        const hay = `${item.title} ${item.summary} ${getRegionLabel(item.region)}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    el.mapVisibleCountTag.textContent = `${visiblePins.length} pins`;
+
+    el.mapPinsLayer.innerHTML = visiblePins.map((item) => {
+      const cat = getCategory(item.category);
+      const done = isCompleted(item.id);
+      const selected = selectedPinId === item.id;
+      return `
+        <button type="button"
+                class="map-pin ${done ? "is-done" : ""} ${selected ? "is-selected" : ""}"
+                style="left:${item.x}%; top:${item.y}%; background:${done ? "#10B981" : cat.color};"
+                data-pin-id="${item.id}"
+                title="${item.title}"
+                aria-label="${item.title} (${getRegionLabel(item.region)})">
+          ${done ? CHECK_ICON : (CATEGORY_ICONS[item.category] || "")}
+        </button>
+      `;
+    }).join("");
+
+    applyMapTransform();
+    renderMapInspector();
+  }
+
+  function renderMapInspector() {
+    const item = DATA.items.find((i) => i.id === selectedPinId);
+    if (!item) return;
+
+    const done = isCompleted(item.id);
+    const cat = getCategory(item.category);
+    const sourceBadge = item.source === "confirmed"
+      ? `<span class="tag tag-confirmed">Confirmed</span>`
+      : `<span class="tag tag-rumor">Community / Rumor</span>`;
+
+    el.mapInspectorBar.innerHTML = `
+      <div class="inspector-grid">
+        <div style="min-width:0; flex:1;">
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center;">
+            ${sourceBadge}
+            <span class="tag tag-neutral">${cat.shortLabel}</span>
+            <span class="tag tag-neutral">${getRegionLabel(item.region)}</span>
+            <span class="tag tag-neutral">${item.reward}</span>
+          </div>
+          <h3 class="inspector-title">${item.title}</h3>
+          <p style="margin:0 0 0.4rem; color:var(--text-secondary); font-size:0.88rem;">${item.summary}</p>
+          <p style="margin:0; font-size:0.84rem;"><strong style="color:var(--accent-coral);">Field Tip:</strong> ${item.tip}</p>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:0.45rem; flex-shrink:0;">
+          <button type="button" class="btn ${done ? "btn-teal" : "btn-primary"}" data-toggle-id="${item.id}">
+            ${done ? "Completed (Undo)" : "Mark Complete"}
+          </button>
+          <button type="button" class="btn" data-open-detail="${item.id}">Note &amp; Details</button>
+        </div>
+      </div>
+    `;
+  }
+
+  /* GTABase-style Checklist */
   function getFilteredItems() {
     const q = filters.search.trim().toLowerCase();
     return DATA.items.filter((item) => {
@@ -250,6 +387,9 @@
   function renderChecklist() {
     const items = getFilteredItems();
     el.resultCountText.textContent = `Showing ${items.length} of ${DATA.items.length} entries`;
+    el.checklistContainer.classList.toggle("is-grid", checklistMode === "grid");
+    el.viewListBtn.setAttribute("aria-pressed", String(checklistMode === "list"));
+    el.viewGridBtn.setAttribute("aria-pressed", String(checklistMode === "grid"));
 
     if (items.length === 0) {
       el.checklistContainer.innerHTML = "";
@@ -260,113 +400,41 @@
     el.emptyStateBox.hidden = true;
     el.checklistContainer.innerHTML = items.map((item) => {
       const done = isCompleted(item.id);
+      const cat = getCategory(item.category);
       const hasNote = Boolean(state.notes[item.id] && state.notes[item.id].trim());
       const sourceBadge = item.source === "confirmed"
         ? `<span class="tag tag-confirmed">Confirmed</span>`
         : `<span class="tag tag-rumor">Community / Rumor</span>`;
 
       return `
-        <li class="check-row ${done ? "is-done" : ""}">
+        <li class="check-row ${done ? "is-done" : ""}" style="--row-accent:${cat.color};">
           <button type="button" class="check-toggle" data-toggle-id="${item.id}" aria-pressed="${done}" aria-label="${done ? "Unmark" : "Mark"} ${item.title} complete">
-            ${done ? "&#10003;" : ""}
+            ${done ? CHECK_ICON : ""}
           </button>
           <div class="check-body">
             <div class="check-head">
               <h3 class="check-title">${item.title}</h3>
               ${sourceBadge}
-              <span class="tag tag-neutral">${getCategoryLabel(item.category)}</span>
+              <span class="tag tag-neutral">${cat.shortLabel}</span>
               ${hasNote ? `<span class="tag tag-neutral">Note saved</span>` : ""}
             </div>
             <p class="check-summary">${item.summary}</p>
             <div class="check-meta">
               <span>Region: <strong>${getRegionLabel(item.region)}</strong></span>
               <span>|</span>
-              <span>Reward: <strong>${item.reward}</strong></span>
+              <span>Value: <strong>${item.reward}</strong></span>
             </div>
           </div>
           <div class="check-actions">
             <button type="button" class="btn btn-sm" data-open-detail="${item.id}">Details &amp; Tip</button>
-            <button type="button" class="btn btn-sm" data-jump-map="${item.id}">Map Pin</button>
+            <button type="button" class="btn btn-sm" data-jump-map="${item.id}">Locate Pin</button>
           </div>
         </li>
       `;
     }).join("");
   }
 
-  /* Render Interactive Map */
-  function renderMap() {
-    const pillCategories = [{ id: "all", shortLabel: "All Pins" }, ...DATA.categories];
-    el.mapFilterPills.innerHTML = pillCategories.map((cat) => {
-      const active = mapCategory === cat.id;
-      return `
-        <button type="button" class="btn btn-sm ${active ? "btn-primary" : ""}" data-map-cat="${cat.id}">
-          ${cat.shortLabel}
-        </button>
-      `;
-    }).join("");
-
-    const visiblePins = DATA.items.filter((i) => mapCategory === "all" || i.category === mapCategory);
-    el.mapPinsLayer.innerHTML = visiblePins.map((item, idx) => {
-      const done = isCompleted(item.id);
-      const selected = selectedPinId === item.id;
-      const cls = [
-        "map-pin",
-        done ? "is-done" : "",
-        item.source === "rumor" ? "is-rumor" : "",
-        selected ? "is-selected" : ""
-      ].filter(Boolean).join(" ");
-
-      return `
-        <button type="button"
-                class="${cls}"
-                style="left: ${item.x}%; top: ${item.y}%;"
-                data-pin-id="${item.id}"
-                aria-label="${item.title} (${getRegionLabel(item.region)})">
-          ${done ? "&#10003;" : idx + 1}
-        </button>
-      `;
-    }).join("");
-
-    el.mapCanvas.style.transform = `scale(${mapZoom})`;
-    el.mapZoomResetBtn.textContent = `${Math.round(mapZoom * 100)}%`;
-
-    renderMapInspector();
-  }
-
-  function renderMapInspector() {
-    if (!selectedPinId) return;
-    const item = DATA.items.find((i) => i.id === selectedPinId);
-    if (!item) return;
-
-    const done = isCompleted(item.id);
-    const sourceBadge = item.source === "confirmed"
-      ? `<span class="tag tag-confirmed">Confirmed</span>`
-      : `<span class="tag tag-rumor">Community / Rumor</span>`;
-
-    el.mapInspectorContent.innerHTML = `
-      <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.45rem;">
-        ${sourceBadge}
-        <span class="tag tag-neutral">${getCategoryLabel(item.category)}</span>
-        <span class="tag tag-neutral">${getRegionLabel(item.region)}</span>
-      </div>
-      <h2>${item.title}</h2>
-      <p style="margin:0.4rem 0 0; color:var(--text-secondary);">${item.summary}</p>
-      <div class="tip-box">
-        <strong>Field Tip:</strong> ${item.tip}
-      </div>
-      <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 1rem;">
-        Expected Value / Type: <strong style="color:var(--text-primary);">${item.reward}</strong>
-      </p>
-      <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
-        <button type="button" class="btn ${done ? "btn-teal" : "btn-primary"}" data-toggle-id="${item.id}">
-          ${done ? "Completed (Undo)" : "Mark Complete"}
-        </button>
-        <button type="button" class="btn" data-open-detail="${item.id}">Add Note</button>
-      </div>
-    `;
-  }
-
-  /* Render Money & Heist Prep */
+  /* Money & Heist Planner */
   function renderMoneyView() {
     const cash = Math.max(0, Number(state.cash) || 0);
     el.milestoneList.innerHTML = DATA.moneyMilestones.map((ms) => {
@@ -410,12 +478,12 @@
     }
   }
 
-  /* Render Config-Driven Affiliate & Ecosystem Links (No dead buttons per R-26) */
+  /* Config-Driven Ecosystem & Monetization */
   function renderMonetization() {
     el.affiliateGrid.innerHTML = CONFIG.affiliates.map((item) => {
       const hasUrl = Boolean(item.url && item.url.trim());
       const actionHtml = hasUrl
-        ? `<a class="btn btn-sm" href="${item.url}" target="_blank" rel="noopener noreferrer sponsored">${item.ctaLabel}</a>`
+        ? `<a class="btn btn-primary btn-sm" href="${item.url}" target="_blank" rel="noopener noreferrer sponsored">${item.ctaLabel}</a>`
         : `<button type="button" class="btn btn-sm" disabled title="Configure URL in config.js">Link Coming Soon</button>`;
 
       return `
@@ -433,10 +501,10 @@
     el.supportDescText.textContent = CONFIG.support.buyMeACoffee.description;
 
     const links = [
-      { ...CONFIG.social.youtubeMain, primary: false },
+      { ...CONFIG.social.youtubeMain, primary: true },
       { ...CONFIG.social.fbDecoded, primary: false },
       { ...CONFIG.social.fbLootGuides, primary: false },
-      { ...CONFIG.support.buyMeACoffee, primary: true }
+      { ...CONFIG.support.buyMeACoffee, primary: false }
     ];
 
     el.socialLinksContainer.innerHTML = links.map((link) => {
@@ -448,18 +516,19 @@
     }).join("");
   }
 
-  /* Detail Modal */
+  /* Modals */
   function openDetailModal(id) {
     const item = DATA.items.find((i) => i.id === id);
     if (!item) return;
     activeDetailId = id;
 
     const done = isCompleted(id);
+    const cat = getCategory(item.category);
     const sourceBadge = item.source === "confirmed"
       ? `<span class="tag tag-confirmed">Confirmed</span>`
       : `<span class="tag tag-rumor">Community / Rumor</span>`;
 
-    el.detailModalBadges.innerHTML = `${sourceBadge}<span class="tag tag-neutral">${getCategoryLabel(item.category)}</span><span class="tag tag-neutral">${getRegionLabel(item.region)}</span>`;
+    el.detailModalBadges.innerHTML = `${sourceBadge}<span class="tag tag-neutral">${cat.shortLabel}</span><span class="tag tag-neutral">${getRegionLabel(item.region)}</span>`;
     el.detailModalTitle.textContent = item.title;
     el.detailModalSummary.textContent = item.summary;
     el.detailModalTip.textContent = item.tip;
@@ -475,7 +544,6 @@
     activeDetailId = null;
   }
 
-  /* Backup Modal */
   function openBackupModal() {
     el.backupFeedback.hidden = true;
     el.backupModal.hidden = false;
@@ -510,13 +578,8 @@
       try {
         const parsed = JSON.parse(String(reader.result));
         const incoming = parsed.state || parsed;
-        if (!Array.isArray(incoming.completedIds)) {
-          throw new Error("Invalid backup format.");
-        }
-        state = {
-          ...structuredClone(DEFAULT_STATE),
-          ...incoming
-        };
+        if (!Array.isArray(incoming.completedIds)) throw new Error("Invalid format");
+        state = { ...structuredClone(DEFAULT_STATE), ...incoming };
         saveState();
         el.cashInput.value = state.cash;
         el.heistTakeInput.value = state.heistTake;
@@ -532,7 +595,6 @@
     reader.readAsText(file);
   }
 
-  /* Copy Shareable Progress Card */
   function copyProgressCard() {
     const total = DATA.items.length;
     const done = state.completedIds.length;
@@ -544,17 +606,17 @@
         const cDone = list.filter((i) => isCompleted(i.id)).length;
         return `- ${cat.shortLabel}: ${cDone}/${list.length}`;
       }),
-      `Tracked with GTA 6 Decoded Tracker`
+      `Track your run at GTA 6 Decoded`
     ].join("\n");
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(lines).then(() => {
-        showToast("Progress summary copied! Paste it in YouTube comments.");
+        showToast("Progress card copied! Paste it in YouTube comments.");
       }).catch(() => {
-        showToast("Clipboard blocked. Copy manually from Backup export.");
+        showToast("Progress: " + pct + "% complete.");
       });
     } else {
-      showToast("Progress ready: " + pct + "% complete.");
+      showToast("Progress: " + pct + "% complete.");
     }
   }
 
@@ -571,12 +633,12 @@
 
   function renderAll() {
     renderOverview();
-    renderChecklist();
     renderMap();
+    renderChecklist();
     renderMoneyView();
   }
 
-  /* Event Wiring */
+  /* Events */
   function bindEvents() {
     document.querySelectorAll(".nav-tab").forEach((btn) => {
       btn.addEventListener("click", () => switchView(btn.dataset.view));
@@ -587,49 +649,144 @@
       applyTheme(current === "dark" ? "light" : "dark");
     });
 
-    el.copyShareBtn.addEventListener("click", copyProgressCard);
+    el.heroCopyBtn.addEventListener("click", copyProgressCard);
+    el.heroJumpChecklistBtn.addEventListener("click", () => {
+      switchView("checklist");
+      document.getElementById("panel-checklist").scrollIntoView({ behavior: "smooth" });
+    });
 
-    el.categoryMiniGrid.addEventListener("click", (e) => {
+    el.categoryStrip.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-quick-cat]");
       if (!btn) return;
       const catId = btn.dataset.quickCat;
-      filters.category = filters.category === catId ? "all" : catId;
-      el.categorySelect.value = filters.category;
-      switchView("checklist");
-      renderOverview();
-      renderChecklist();
+      if (activeView === "map") {
+        const allOthersOff = DATA.categories.every((c) => c.id === catId ? mapLayers[c.id] : !mapLayers[c.id]);
+        if (allOthersOff) {
+          DATA.categories.forEach((c) => { mapLayers[c.id] = true; });
+        } else {
+          DATA.categories.forEach((c) => { mapLayers[c.id] = c.id === catId; });
+        }
+        renderMap();
+      } else {
+        filters.category = filters.category === catId ? "all" : catId;
+        el.categorySelect.value = filters.category;
+        switchView("checklist");
+        renderOverview();
+        renderChecklist();
+      }
     });
 
+    /* Map Controls */
+    el.mapSearchInput.addEventListener("input", (e) => {
+      mapSearch = e.target.value;
+      renderMap();
+    });
+
+    el.mapShowAllBtn.addEventListener("click", () => {
+      DATA.categories.forEach((c) => { mapLayers[c.id] = true; });
+      renderMap();
+    });
+
+    el.mapHideAllBtn.addEventListener("click", () => {
+      DATA.categories.forEach((c) => { mapLayers[c.id] = false; });
+      renderMap();
+    });
+
+    el.mapHideCompletedToggle.addEventListener("change", (e) => {
+      mapHideCompleted = e.target.checked;
+      renderMap();
+    });
+
+    el.mapSourceSelect.addEventListener("change", (e) => {
+      mapSource = e.target.value;
+      renderMap();
+    });
+
+    el.mapZoomInBtn.addEventListener("click", () => {
+      mapZoom = Math.min(2.25, +(mapZoom + 0.25).toFixed(2));
+      applyMapTransform();
+    });
+
+    el.mapZoomOutBtn.addEventListener("click", () => {
+      mapZoom = Math.max(1, +(mapZoom - 0.25).toFixed(2));
+      if (mapZoom === 1) { mapPanX = 0; mapPanY = 0; }
+      applyMapTransform();
+    });
+
+    el.mapZoomResetBtn.addEventListener("click", () => {
+      mapZoom = 1;
+      mapPanX = 0;
+      mapPanY = 0;
+      applyMapTransform();
+    });
+
+    /* Drag-to-Pan Map */
+    el.mapViewport.addEventListener("pointerdown", (e) => {
+      if (e.target.closest(".map-pin")) return;
+      if (mapZoom <= 1) return;
+      isDragging = true;
+      dragStartX = e.clientX - mapPanX;
+      dragStartY = e.clientY - mapPanY;
+      el.mapViewport.classList.add("is-dragging");
+      el.mapViewport.setPointerCapture(e.pointerId);
+    });
+
+    el.mapViewport.addEventListener("pointermove", (e) => {
+      if (!isDragging) return;
+      const maxOffset = (mapZoom - 1) * 320;
+      mapPanX = Math.max(-maxOffset, Math.min(maxOffset, e.clientX - dragStartX));
+      mapPanY = Math.max(-maxOffset, Math.min(maxOffset, e.clientY - dragStartY));
+      applyMapTransform();
+    });
+
+    el.mapViewport.addEventListener("pointerup", () => {
+      isDragging = false;
+      el.mapViewport.classList.remove("is-dragging");
+    });
+
+    /* Checklist Controls */
     el.searchInput.addEventListener("input", (e) => {
       filters.search = e.target.value;
       renderChecklist();
     });
-
     el.categorySelect.addEventListener("change", (e) => {
       filters.category = e.target.value;
       renderOverview();
       renderChecklist();
     });
-
     el.sourceSelect.addEventListener("change", (e) => {
       filters.source = e.target.value;
       renderChecklist();
     });
-
     el.regionSelect.addEventListener("change", (e) => {
       filters.region = e.target.value;
       renderChecklist();
     });
-
     el.statusSelect.addEventListener("change", (e) => {
       filters.status = e.target.value;
       renderChecklist();
     });
-
+    el.viewListBtn.addEventListener("click", () => {
+      checklistMode = "list";
+      renderChecklist();
+    });
+    el.viewGridBtn.addEventListener("click", () => {
+      checklistMode = "grid";
+      renderChecklist();
+    });
     el.resetFiltersBtn.addEventListener("click", resetFilters);
     el.emptyResetBtn.addEventListener("click", resetFilters);
 
+    /* Delegated Clicks */
     document.addEventListener("click", (e) => {
+      const layerBtn = e.target.closest("[data-layer-id]");
+      if (layerBtn) {
+        const id = layerBtn.dataset.layerId;
+        mapLayers[id] = !mapLayers[id];
+        renderMap();
+        return;
+      }
+
       const toggleBtn = e.target.closest("[data-toggle-id]");
       if (toggleBtn) {
         toggleCompleted(toggleBtn.dataset.toggleId);
@@ -646,9 +803,12 @@
       if (jumpMapBtn) {
         const id = jumpMapBtn.dataset.jumpMap;
         selectedPinId = id;
-        mapCategory = "all";
+        DATA.categories.forEach((c) => { mapLayers[c.id] = true; });
+        mapHideCompleted = false;
+        el.mapHideCompletedToggle.checked = false;
         switchView("map");
         renderMap();
+        document.getElementById("panel-map").scrollIntoView({ behavior: "smooth" });
         return;
       }
 
@@ -659,28 +819,25 @@
         return;
       }
 
-      const mapCatBtn = e.target.closest("[data-map-cat]");
-      if (mapCatBtn) {
-        mapCategory = mapCatBtn.dataset.mapCat;
-        renderMap();
+      const addCashBtn = e.target.closest("[data-add-cash]");
+      if (addCashBtn) {
+        state.cash = Math.max(0, Number(state.cash || 0) + Number(addCashBtn.dataset.addCash));
+        el.cashInput.value = state.cash;
+        saveState();
+        renderMoneyView();
+        return;
+      }
+
+      const presetBtn = e.target.closest("[data-split-preset]");
+      if (presetBtn) {
+        const parts = presetBtn.dataset.splitPreset.split(",").map(Number);
+        state.heistSplits.forEach((p, i) => { p.pct = parts[i]; });
+        saveState();
+        renderMoneyView();
       }
     });
 
-    el.mapZoomInBtn.addEventListener("click", () => {
-      mapZoom = Math.min(2, +(mapZoom + 0.25).toFixed(2));
-      renderMap();
-    });
-
-    el.mapZoomOutBtn.addEventListener("click", () => {
-      mapZoom = Math.max(1, +(mapZoom - 0.25).toFixed(2));
-      renderMap();
-    });
-
-    el.mapZoomResetBtn.addEventListener("click", () => {
-      mapZoom = 1;
-      renderMap();
-    });
-
+    /* Money Inputs */
     el.cashInput.addEventListener("input", (e) => {
       state.cash = Math.max(0, Number(e.target.value) || 0);
       saveState();
@@ -723,7 +880,7 @@
     el.detailShowOnMapBtn.addEventListener("click", () => {
       if (!activeDetailId) return;
       selectedPinId = activeDetailId;
-      mapCategory = "all";
+      DATA.categories.forEach((c) => { mapLayers[c.id] = true; });
       closeDetailModal();
       switchView("map");
       renderMap();
