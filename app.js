@@ -919,6 +919,22 @@
         if (!el.backupModal.hidden) closeBackupModal();
       }
     });
+
+    /* V13 GoatCounter CTA & outbound Edge/Gumroad click tracking */
+    const fireGcEvent = (slug, title) => {
+      if (window.goatcounter && typeof window.goatcounter.count === "function") {
+        const site = (location.pathname.split("/")[1] || location.hostname || "gta6-decoded-tracker").slice(0, 40);
+        window.goatcounter.count({ path: "click/" + site + "/" + slug, title: title, event: true });
+      }
+    };
+    const heroCopy = document.getElementById("heroCopyBtn");
+    if (heroCopy) heroCopy.addEventListener("click", () => fireGcEvent("copy-progress-card", "SP01 Copy Progress Card"));
+    const heroBrowse = document.getElementById("heroJumpChecklistBtn");
+    if (heroBrowse) heroBrowse.addEventListener("click", () => fireGcEvent("browse-40-entries", "SP01 Browse 40 Entries"));
+    document.addEventListener("click", (ev) => {
+      const a = ev.target && ev.target.closest ? ev.target.closest('a[href*="microsoftedge.microsoft.com"]') : null;
+      if (a) fireGcEvent("edge-store", "SP01 Edge Store click");
+    }, true);
   }
 
   initTheme();
